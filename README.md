@@ -2,7 +2,7 @@
 
 An Emacs package for displaying the forecast from OpenWeatherMap.
 
-[[images/sunshine-screenshot.png]]
+![Screenshot](images/sunshine-screenshot.png?raw=true "Sunshine Screenshot")
 
 ## Installation and Configuration
 
