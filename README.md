@@ -20,7 +20,7 @@ called `sunshine`.
 
 ## Usage
 
-To display the forecast for your location, call `sunshine-forecast'.
+To display the forecast for your location, call `sunshine-forecast`.
 
 Two key mappings are available within the forecast window:
 
@@ -29,4 +29,16 @@ Two key mappings are available within the forecast window:
         course)
 
 If you are using a GUI Emacs, you may like to display the weather forecast icons
-automatically. To do so, set `sunshine-show-icons' to t.
+by default. To do so, set `sunshine-show-icons` to t.
+
+## License
+
+This program is not part of GNU Emacs.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2, or (at your option) any later version.
+
+This file is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
