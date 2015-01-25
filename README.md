@@ -4,7 +4,7 @@ An Emacs package for displaying the forecast from OpenWeatherMap.
 
 ## Installation and Configuration
 
-1. Copy this file somewhere in your Emacs `load-path`.  To see what your
+1. Copy `sunshine.el` somewhere in your Emacs `load-path`.  To see what your
    `load-path` is, run inside emacs: `C-h v load-path<RET>`.
 
 2. Add the following to your .emacs file:
