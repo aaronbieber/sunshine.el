@@ -2,6 +2,8 @@
 
 An Emacs package for displaying the forecast from OpenWeatherMap.
 
+[[images/sunshine-screenshot.png]]
+
 ## Installation and Configuration
 
 1. Copy `sunshine.el` somewhere in your Emacs `load-path`.  To see what your
