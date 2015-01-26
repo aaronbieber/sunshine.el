@@ -68,9 +68,17 @@ See `run-hooks'."
 
 (defcustom sunshine-location "New York, NY"
   "The default location for which to retrieve weather.
-You can use a city/state value like \"New York, NY\" or a ZIP code like \"06032\"."
+The location value should be a city/state value like \"New York, NY\""
   :group 'sunshine
   :type 'string)
+
+(defcustom sunshine-units "imperial"
+  "The unit type to use for measurements.
+One of \"metric\" or \"imperial\".
+The default value is \"imperial\" because America."
+  :group 'sunshine
+  :type '(radio (const :tag "Metric (C)" "metric")
+                (const :tag "Imperial (F)" "imperial")))
 
 (defcustom sunshine-cache-ttl (seconds-to-time 900)
   "How long to keep forecast data cached; sorry, it is a time value.
@@ -114,7 +122,7 @@ The following keys are available in `sunshine-mode':
 (defun sunshine-forecast ()
   "The main entry into Sunshine; display the forecast in a window."
   (interactive)
-  (sunshine-get-forecast sunshine-location))
+  (sunshine-get-forecast sunshine-location sunshine-units))
 
 (defun sunshine-key-quit ()
   "Destroy the Sunshine buffer."
@@ -137,18 +145,20 @@ The following keys are available in `sunshine-mode':
       (prog1 (json-read)
         (kill-buffer)))))
 
-(defun sunshine-make-url (location)
-  "Make a URL suitable for retrieving the weather for LOCATION."
+(defun sunshine-make-url (location units)
+  "Make a URL for retrieving the weather for LOCATION in UNITS."
   (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
                       (url-encode-url location)
-                      "&mode=json&units=imperial&cnt=5"))
+                      "&mode=json&units="
+                      (url-encode-url units)
+                      "&cnt=5"))
 
 (defun sunshine-get-forecast (location &optional units)
   "Get forecast data from OpenWeatherMap's API.
 Provide a LOCATION and optionally the preferred unit
 of measurement as UNITS (e.g. 'metric' or 'imperial')."
   (sunshine-prepare-window)
-  (let* ((url (sunshine-make-url location)))
+  (let* ((url (sunshine-make-url location units)))
     (if (sunshine-forecast-cache-expired url)
         (url-retrieve url 'sunshine-retrieved)
       ;; Cache is not expired; pull out the cached data.
@@ -192,7 +202,7 @@ of measurement as UNITS (e.g. 'metric' or 'imperial')."
   "Return the last modified time of the Sunshine cache, if it exists.
 If provided, FORMAT is used as an argument to `format-time-string'.
 If omitted, or nil, a date object is returned."
-  (let ((cache-time (url-is-cached (sunshine-make-url sunshine-location))))
+  (let ((cache-time (url-is-cached (sunshine-make-url sunshine-location sunshine-units))))
     (if format
         (format-time-string format cache-time)
       cache-time)))
