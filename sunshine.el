@@ -243,7 +243,7 @@ forecast results."
     (set-window-buffer win buf)
     ;; Start the window rather short so it doesn't jarringly change
     ;; size after the download.
-    (window-resize-no-error win (- 10 (window-total-height win)))
+    (window-resize win (- 10 (window-total-height win)))
     (with-current-buffer buf
       (setq buffer-read-only nil)
       (erase-buffer)
