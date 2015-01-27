@@ -143,6 +143,7 @@ The following keys are available in `sunshine-mode':
   (when (re-search-forward "^HTTP/.+ 200 OK$" (line-end-position) t)
     (when (search-forward "\n\n" nil t)
       (prog1 (json-read)
+        (url-store-in-cache (current-buffer))
         (kill-buffer)))))
 
 (defun sunshine-make-url (location units)
@@ -174,7 +175,6 @@ of measurement as UNITS (e.g. 'metric' or 'imperial')."
         (forecast (sunshine-extract-response)))
     (if forecast
         (progn
-          (url-store-in-cache (current-buffer))
           (with-current-buffer buf
             (progn
               (sunshine-draw-forecast
