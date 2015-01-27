@@ -122,7 +122,13 @@ The following keys are available in `sunshine-mode':
 (defun sunshine-forecast ()
   "The main entry into Sunshine; display the forecast in a window."
   (interactive)
-  (sunshine-get-forecast sunshine-location sunshine-units))
+  (sunshine-prepare-window)
+  (sunshine-get-forecast sunshine-location sunshine-units 'full))
+
+(defun sunshine-quick-forecast ()
+  "Display a quick forecast in the minibuffer."
+  (interactive)
+  (sunshine-get-forecast sunshine-location sunshine-units 'quick))
 
 (defun sunshine-key-quit ()
   "Destroy the Sunshine buffer."
@@ -138,14 +144,6 @@ The following keys are available in `sunshine-mode':
 
 ;;; INTERNAL FUNCTIONS:
 
-(defun sunshine-extract-response ()
-  "Extract the JSON response from the buffer returned by url-http."
-  (when (re-search-forward "^HTTP/.+ 200 OK$" (line-end-position) t)
-    (when (search-forward "\n\n" nil t)
-      (prog1 (json-read)
-        (url-store-in-cache (current-buffer))
-        (kill-buffer)))))
-
 (defun sunshine-make-url (location units)
   "Make a URL for retrieving the weather for LOCATION in UNITS."
   (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
@@ -154,34 +152,50 @@ The following keys are available in `sunshine-mode':
                       (url-encode-url units)
                       "&cnt=5"))
 
-(defun sunshine-get-forecast (location &optional units)
+(defun sunshine-get-forecast (location units display-type)
   "Get forecast data from OpenWeatherMap's API.
-Provide a LOCATION and optionally the preferred unit
-of measurement as UNITS (e.g. 'metric' or 'imperial')."
-  (sunshine-prepare-window)
+Provide a LOCATION and optionally the preferred unit of measurement as
+UNITS (e.g. 'metric' or 'imperial').
+DISPLAY-TYPE determines whether a full or quick forecast is shown.
+Its value may be 'full or 'quick."
   (let* ((url (sunshine-make-url location units)))
     (if (sunshine-forecast-cache-expired url)
-        (url-retrieve url 'sunshine-retrieved)
+        (url-retrieve url 'sunshine-retrieved (list display-type))
       ;; Cache is not expired; pull out the cached data.
       (with-temp-buffer
         (mm-disable-multibyte)
         (url-cache-extract (url-cache-create-filename url))
         ;; Use a fake status value; we don't use it anyway.
-        (sunshine-retrieved "status")))))
+        (sunshine-retrieved "status" display-type)))))
 
-(defun sunshine-retrieved (status)
-  "Process the retrieved data; receives STATUS, which we discard."
+(defun sunshine-retrieved (status display-type)
+  "Process the retrieved data; receives STATUS, which we discard.
+DISPLAY-TYPE defines the type of display that will be shown."
   (let ((buf (get-buffer-create sunshine-buffer-name))
         (forecast (sunshine-extract-response)))
     (if forecast
-        (progn
-          (with-current-buffer buf
-            (progn
-              (sunshine-draw-forecast
-               (sunshine-build-simple-forecast forecast))
-              (fit-window-to-buffer (get-buffer-window buf))
-              (select-window (get-buffer-window sunshine-buffer-name)))))
+        (let ((simple-forecast (sunshine-build-simple-forecast forecast)))
+          (cond ((equal display-type 'full)
+                 (progn
+                   (with-current-buffer buf
+                     (progn
+                       (sunshine-draw-forecast simple-forecast)
+                       (fit-window-to-buffer (get-buffer-window buf))
+                       (select-window (get-buffer-window sunshine-buffer-name)))))))
+          (cond ((equal display-type 'quick)
+                 (sunshine-draw-quick-forecast simple-forecast))))
       (sunshine-display-error))))
+
+(defun sunshine-extract-response ()
+  "Extract the JSON response from the buffer returned by url-http."
+  (progn
+    (if (re-search-forward "^HTTP/.+ 200 OK$" (line-end-position) t)
+        (when (search-forward "\n\n" nil t)
+          (prog1 (json-read)
+            (url-store-in-cache (current-buffer))
+            (kill-buffer)
+            ))
+      (kill-buffer))))
 
 (defun sunshine-display-error ()
   "Display an error in the Sunshine window."
@@ -306,7 +320,6 @@ Pivot it into a dataset like:
   "Draw FORECAST in pretty ASCII."
   (let* ((cached (sunshine-get-cached-time "%b. %e at %l:%M %p"))
          (location (cdr (assoc 'location forecast)))
-         (days (cdr (assoc 'days forecast)))
          (output-rows (sunshine-pivot-forecast-rows forecast)))
     (setq buffer-read-only nil)
     (erase-buffer)
@@ -340,6 +353,31 @@ Pivot it into a dataset like:
     (setq buffer-read-only t)
     (if sunshine-show-icons
         (sunshine-get-icons))))
+
+(defun sunshine-draw-quick-forecast (forecast)
+  "Draw a quick FORECAST in the minibuffer."
+  (let* ((cached (sunshine-get-cached-time "%b. %e at %l:%M %p"))
+         (location (cdr (assoc 'location forecast)))
+         (output-rows (sunshine-pivot-forecast-rows forecast))
+         
+         )
+    (message (concat
+      "Forecast for " location " (updated " cached ")\n\n"
+      ;; Dates
+      (propertize (sunshine-pad-or-trunc (cadr (assoc "dates" output-rows)) 20)
+                  'face '(:weight bold))
+      (propertize (sunshine-pad-or-trunc (caddr (assoc "dates" output-rows)) 20)
+                  'face '(:weight bold)) "\n"
+      ;; Conditions
+      (sunshine-pad-or-trunc (cadr (assoc "descs" output-rows)) 20)
+      (sunshine-pad-or-trunc (caddr (assoc "descs" output-rows)) 20) "\n"
+      ;; Highs
+      (sunshine-pad-or-trunc (cadr (assoc "highs" output-rows)) 20)
+      (sunshine-pad-or-trunc (caddr (assoc "highs" output-rows)) 20) "\n"
+      ;; Lows
+      (sunshine-pad-or-trunc (cadr (assoc "lows" output-rows)) 20)
+      (sunshine-pad-or-trunc (caddr (assoc "lows" output-rows)) 20) "\n"
+      ))))
 
 (defun sunshine-seek-to-icon-marker (number)
   "Move point to the location of the icon marker for icon NUMBER."
