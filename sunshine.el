@@ -234,7 +234,9 @@ FORECAST is the raw forecast data resulting from calling json-read on the
 forecast results."
   (let* ((citylist (cdr (assoc 'city forecast)))
          (city (cdr (assoc 'name citylist)))
-         (country (cdr (assoc 'country citylist))))
+         (country (cdr (assoc 'country citylist)))
+         (temp-symbol (cond ((equal sunshine-units "imperial") "F")
+                            ((equal sunshine-units "metric") "C"))))
     (list
      (cons 'location (concat city ", " country))
      (cons 'days (cl-loop for day across (cdr (assoc 'list forecast)) collect
@@ -242,7 +244,10 @@ forecast results."
                           (cons 'date (format-time-string "%A, %h. %e" (seconds-to-time (cdr (assoc 'dt day)))))
                           (cons 'desc (cdr (assoc 'main (elt (cdr (assoc 'weather day)) 0))))
                           (cons 'icon (cdr (assoc 'icon (elt (cdr (assoc 'weather day)) 0))))
-                          (cons 'temp (cdr (assoc 'temp day)))
+                          (cons 'temp
+                                (list
+                                 (cons 'min (format "%s %s" (cdr (assoc 'min (cdr (assoc 'temp day)))) temp-symbol))
+                                 (cons 'max (format "%s %s" (cdr (assoc 'max (cdr (assoc 'temp day)))) temp-symbol))))
                           (cons 'pressure (cdr (assoc 'pressure day)))))))))
 
 (defun sunshine-prepare-window ()
@@ -286,8 +291,8 @@ Pivot it into a dataset like:
              collect (cdr (assoc 'date day)) into dates
              collect (cdr (assoc 'icon day)) into icons
              collect (cdr (assoc 'desc day)) into descs
-             collect (format "High: %s" (number-to-string (cdr (assoc 'max (cdr (assoc 'temp day)))))) into highs
-             collect (format "Low:  %s" (number-to-string (cdr (assoc 'min (cdr (assoc 'temp day)))))) into lows
+             collect (format "High: %s" (cdr (assoc 'max (cdr (assoc 'temp day))))) into highs
+             collect (format "Low:  %s" (cdr (assoc 'min (cdr (assoc 'temp day))))) into lows
              ;; This new list now contains one list for each
              ;; screen line.
              finally (return (list
