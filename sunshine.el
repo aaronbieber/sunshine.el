@@ -110,18 +110,13 @@ The default value is one day (86400 seconds)."
 
 ;;; INTERACTIVE FUNCTIONS (COMMANDS):
 
-(defun sunshine-mode ()
+(define-derived-mode sunshine-mode nil "Sunshine"
   "A major mode for the Sunshine window.
 
 The following keys are available in `sunshine-mode':
 
   \\{sunshine-mode-map}"
-  (interactive)
-  (use-local-map sunshine-mode-map)
-  (setq truncate-lines t)
-  (setq mode-name "Sunshine")
-  (setq major-mode 'sunshine-mode)
-  (run-mode-hooks 'sunshine-mode-hook))
+  (setq truncate-lines t))
 
 (defun sunshine-forecast ()
   "The main entry into Sunshine; display the forecast in a window."
