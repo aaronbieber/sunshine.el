@@ -99,8 +99,8 @@ The default value is one day (86400 seconds)."
 
 (defvar sunshine-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "q" 'sunshine-key-quit)
-    (define-key map "i" 'sunshine-key-toggle-icons)
+    (define-key map "q" 'sunshine-quit)
+    (define-key map "i" 'sunshine-toggle-icons)
     map)
   "Get the keymap for the Sunshine window.")
 
@@ -130,12 +130,12 @@ The following keys are available in `sunshine-mode':
   (interactive)
   (sunshine-get-forecast sunshine-location sunshine-units 'quick))
 
-(defun sunshine-key-quit ()
+(defun sunshine-quit ()
   "Destroy the Sunshine buffer."
   (interactive)
   (kill-buffer (get-buffer sunshine-buffer-name)))
 
-(defun sunshine-key-toggle-icons ()
+(defun sunshine-toggle-icons ()
   "Turn Sunshine icons on or off."
   (interactive)
   (progn
@@ -199,7 +199,7 @@ DISPLAY-TYPE defines the type of display that will be shown."
 
 (defun sunshine-display-error ()
   "Display an error in the Sunshine window."
-  (let ((quit-key (key-description (where-is-internal 'sunshine-key-quit sunshine-mode-map t))))
+  (let ((quit-key (key-description (where-is-internal 'sunshine-quit sunshine-mode-map t))))
     (with-current-buffer sunshine-buffer-name
       (progn
         (setq buffer-read-only nil)
