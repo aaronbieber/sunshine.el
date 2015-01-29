@@ -76,13 +76,11 @@ The location value should be a city/state value like \"New York, NY\""
   :group 'sunshine
   :type 'string)
 
-(defcustom sunshine-units "imperial"
-  "The unit type to use for measurements.
-One of \"metric\" or \"imperial\".
-The default value is \"imperial\" because America."
+(defcustom sunshine-units 'imperial
+  "The unit type to use for measurements."
   :group 'sunshine
-  :type '(radio (const :tag "Metric (C)" "metric")
-                (const :tag "Imperial (F)" "imperial")))
+  :type '(radio (const :tag "Metric (C)" metric)
+                (const :tag "Imperial (F)" imperial)))
 
 (defcustom sunshine-cache-ttl (seconds-to-time 900)
   "How long to keep forecast data cached; sorry, it is a time value.
@@ -148,7 +146,7 @@ The following keys are available in `sunshine-mode':
   (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
                       (url-encode-url location)
                       "&mode=json&units="
-                      (url-encode-url units)
+                      (url-encode-url (symbol-name units))
                       "&cnt=5"))
 
 (defun sunshine-get-forecast (location units display-type)
@@ -248,8 +246,7 @@ forecast results."
   (let* ((citylist (cdr (assoc 'city forecast)))
          (city (cdr (assoc 'name citylist)))
          (country (cdr (assoc 'country citylist)))
-         (temp-symbol (cond ((equal sunshine-units "imperial") "F")
-                            ((equal sunshine-units "metric") "C"))))
+         (temp-symbol (sunshine-units-symbol)))
     (list
      (cons 'location (concat city ", " country))
      (cons 'days (cl-loop for day across (cdr (assoc 'list forecast)) collect
@@ -472,6 +469,11 @@ available width, truncate it to fit, optionally appending TRUNC-STRING."
     (concat (if pad (make-string pad ? ))
             display-string
             (if pad (make-string pad ? )))))
+
+(defun sunshine-units-symbol ()
+  "Return the symbol appropriate for the current value of sunshine-units."
+  (cond ((equal sunshine-units 'imperial) "F")
+        ((equal sunshine-units 'metric) "C")))
 
 (provide 'sunshine)
 ;;; sunshine.el ends here
