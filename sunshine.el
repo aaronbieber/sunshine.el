@@ -366,13 +366,13 @@ Pivot it into a dataset like:
                   'face '(:weight bold)) "\n"
       ;; Conditions
       (sunshine-pad-or-trunc (cadr (assoc "descs" output-rows)) 20)
-      (sunshine-pad-or-trunc (caddr (assoc "descs" output-rows)) 20) "\n"
+      (sunshine-pad-or-trunc (cadr (cdr (assoc "descs" output-rows))) 20) "\n"
       ;; Highs
       (sunshine-pad-or-trunc (cadr (assoc "highs" output-rows)) 20)
-      (sunshine-pad-or-trunc (caddr (assoc "highs" output-rows)) 20) "\n"
+      (sunshine-pad-or-trunc (cadr (cdr (assoc "highs" output-rows))) 20) "\n"
       ;; Lows
       (sunshine-pad-or-trunc (cadr (assoc "lows" output-rows)) 20)
-      (sunshine-pad-or-trunc (caddr (assoc "lows" output-rows)) 20) "\n"
+      (sunshine-pad-or-trunc (cadr (cdr (assoc "lows" output-rows))) 20) "\n"
       ))))
 
 (defun sunshine-seek-to-icon-marker (number)
