@@ -1,8 +1,10 @@
 ;;; sunshine.el --- Provide weather and forecast information.
 
-;; Author: Aaron Bieber
-
-;; Version 0.1
+;; Author: Aaron Bieber <aaron@aaronbieber.com>
+;; Version: 0.1
+;; Package-Requires: ((cl-lib "0.5"))
+;; Keywords: tools, weather
+;; URL: https://github.com/aaronbieber/sunshine.el
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -48,7 +50,7 @@
 
 ;;; Code:
 
-(require 'cl-macs)
+(require 'cl-lib)
 (require 'url)
 (require 'url-cache)
 (require 'time-date)
@@ -116,12 +118,14 @@ The following keys are available in `sunshine-mode':
   \\{sunshine-mode-map}"
   (setq truncate-lines t))
 
+;;;###autoload
 (defun sunshine-forecast ()
   "The main entry into Sunshine; display the forecast in a window."
   (interactive)
   (sunshine-prepare-window)
   (sunshine-get-forecast sunshine-location sunshine-units 'full))
 
+;;;###autoload
 (defun sunshine-quick-forecast ()
   "Display a quick forecast in the minibuffer."
   (interactive)
