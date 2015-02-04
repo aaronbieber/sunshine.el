@@ -1,5 +1,7 @@
 # sunshine.el
 
+[![MELPA](http://melpa.org/packages/sunshine-badge.svg)](http://melpa.org/#/sunshine)
+
 An Emacs package for displaying the forecast from OpenWeatherMap.
 
 ![Screenshot](images/sunshine-screenshot.png?raw=true "Sunshine Screenshot")
