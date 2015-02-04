@@ -362,7 +362,7 @@ Pivot it into a dataset like:
       ;; Dates
       (propertize (sunshine-pad-or-trunc (cadr (assoc "dates" output-rows)) 20)
                   'face '(:weight bold))
-      (propertize (sunshine-pad-or-trunc (caddr (assoc "dates" output-rows)) 20)
+      (propertize (sunshine-pad-or-trunc (cadr (cdr (assoc "dates" output-rows))) 20)
                   'face '(:weight bold)) "\n"
       ;; Conditions
       (sunshine-pad-or-trunc (cadr (assoc "descs" output-rows)) 20)
