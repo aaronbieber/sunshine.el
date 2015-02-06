@@ -19,6 +19,13 @@ An Emacs package for displaying the forecast from OpenWeatherMap.
    provide a string, like "New York, NY" or a ZIP code, like "90210".  This
    variable is available through the Customize facility.
 
+   When specifying a ZIP code, you may receive results from a foreign country.
+   This is due to weird behavior from OpenWeatherMap.  To resolve this, append
+   a comma and the country code after the ZIP code.  Note the lack of a space
+   in the example below.
+
+   `(setq sunshine-location "90210,USA")`
+
 A few other configuration options are available, see the configuration group
 called `sunshine`.
 
