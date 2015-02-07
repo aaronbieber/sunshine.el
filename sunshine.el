@@ -23,30 +23,10 @@
 
 ;;; Commentary:
 
-;; 1) Copy this file somewhere in your Emacs `load-path'.  To see what
-;;    your `load-path' is, run inside emacs: C-h v load-path<RET>
-;;
-;; 2) Add the following to your .emacs file:
-;;
-;;    (require 'sunshine)
-;;
-;; 3) Configure your location by setting the variable
-;;    `sunshine-location'.  You can provide a string, like "New York,
-;;    NY" or a ZIP code, like "90210".  This variable is available
-;;    through the Customize facility.
-;;
-;; To display the forecast for your location, call
-;; `sunshine-forecast'.
-;;
-;; If you are using a GUI Emacs, you may like to display the weather
-;; forecast icons automatically. To do so, set `sunshine-show-icons'
-;; to t.
-
-;;; Open issues:
-
-;; * Try to resize windows more politely (fit-window-to-buffer expands
-;;   the window below; it should try to shrink it to compensate,
-;;   maybe). Magit seems to handle this well.
+;; Sunshine allows you to view your weather forecast directly within
+;; Emacs. The recommended method of installing Sunshine is from the
+;; MELPA repository. Full instructions can be found at
+;; http://melpa.org/#/getting-started
 
 ;;; Code:
 
@@ -122,7 +102,7 @@ The following keys are available in `sunshine-mode':
 (defun sunshine-forecast ()
   "The main entry into Sunshine; display the forecast in a window."
   (interactive)
-  (sunshine-prepare-window)
+  ;;(sunshine-prepare-window)
   (sunshine-get-forecast sunshine-location sunshine-units 'full))
 
 ;;;###autoload
@@ -134,7 +114,7 @@ The following keys are available in `sunshine-mode':
 (defun sunshine-quit ()
   "Destroy the Sunshine buffer."
   (interactive)
-  (kill-buffer (get-buffer sunshine-buffer-name)))
+  (quit-window t (selected-window)))
 
 (defun sunshine-toggle-icons ()
   "Turn Sunshine icons on or off."
@@ -161,7 +141,7 @@ DISPLAY-TYPE determines whether a full or quick forecast is shown.
 Its value may be 'full or 'quick."
   (let* ((url (sunshine-make-url location units)))
     (if (sunshine-forecast-cache-expired url)
-        (url-retrieve url 'sunshine-retrieved (list display-type))
+        (url-retrieve url 'sunshine-retrieved (list display-type) t)
       ;; Cache is not expired; pull out the cached data.
       (with-temp-buffer
         (mm-disable-multibyte)
@@ -172,20 +152,22 @@ Its value may be 'full or 'quick."
 (defun sunshine-retrieved (status display-type)
   "Process the retrieved data; receives STATUS, which we discard.
 DISPLAY-TYPE defines the type of display that will be shown."
-  (let ((buf (get-buffer-create sunshine-buffer-name))
-        (forecast (sunshine-extract-response)))
+  (let ((forecast (sunshine-extract-response)))
     (if forecast
         (let ((simple-forecast (sunshine-build-simple-forecast forecast)))
-          (cond ((equal display-type 'full)
-                 (progn
-                   (with-current-buffer buf
-                     (progn
-                       (sunshine-draw-forecast simple-forecast)
-                       (fit-window-to-buffer (get-buffer-window buf))
-                       (select-window (get-buffer-window sunshine-buffer-name)))))))
-          (cond ((equal display-type 'quick)
-                 (sunshine-draw-quick-forecast simple-forecast))))
+          (sunshine-display-forecast simple-forecast display-type))
       (sunshine-display-error))))
+
+(defun sunshine-display-forecast (simple-forecast display-type)
+  "Display SIMPLE-FORECAST using the requested DISPLAY-TYPE."
+  (cond ((equal display-type 'full)
+         (with-current-buffer (sunshine-prepare-buffer)
+           (sunshine-draw-forecast simple-forecast)
+           (if (fboundp 'sunshine-forecast-display-hook)
+               (funcall 'sunshine-forecast-display-hook (current-buffer))
+             (pop-to-buffer (current-buffer)))))
+        ((equal display-type 'quick)
+         (sunshine-draw-quick-forecast simple-forecast))))
 
 (defun sunshine-extract-response ()
   "Extract the JSON response from the buffer returned by url-http."
@@ -264,23 +246,34 @@ forecast results."
                                  (cons 'max (format "%s %s" (cdr (assoc 'max (cdr (assoc 'temp day)))) temp-symbol))))
                           (cons 'pressure (cdr (assoc 'pressure day)))))))))
 
-(defun sunshine-prepare-window ()
-  "Create the window and buffer used to display the forecast."
-  (let* ((buf (get-buffer-create sunshine-buffer-name))
-         (win (or (get-buffer-window sunshine-buffer-name)
-                  (split-window-vertically))))
-    (set-window-buffer win buf)
-    ;; Start the window rather short so it doesn't jarringly change
-    ;; size after the download.
-    (window-resize win (- 10 (window-total-height win)))
+(defun sunshine-prepare-buffer ()
+  "Prepare a buffer for the forecast output."
+  (let ((buf (get-buffer-create sunshine-buffer-name)))
     (with-current-buffer buf
       (setq buffer-read-only nil)
       (erase-buffer)
       (kill-all-local-variables)
-      (set-window-dedicated-p (get-buffer-window buf) t)
       (sunshine-mode)
-      (insert "Loading...")
-      (setq buffer-read-only t))))
+      (setq buffer-read-only t))
+    buf))
+
+;;(defun sunshine-prepare-window ()
+;;  "Create the window and buffer used to display the forecast."
+;;  (let* ((buf (get-buffer-create sunshine-buffer-name))
+;;         (win (or (get-buffer-window sunshine-buffer-name)
+;;                  (split-window-vertically))))
+;;    (set-window-buffer win buf)
+;;    ;; Start the window rather short so it doesn't jarringly change
+;;    ;; size after the download.
+;;    (window-resize win (- 10 (window-total-height win)))
+;;    (with-current-buffer buf
+;;      (setq buffer-read-only nil)
+;;      (erase-buffer)
+;;      (kill-all-local-variables)
+;;      (set-window-dedicated-p (get-buffer-window buf) t)
+;;      (sunshine-mode)
+;;      (insert "Loading...")
+;;      (setq buffer-read-only t))))
 
 (defun sunshine-pivot-forecast-rows (forecast)
   "Pivot FORECAST rows of days into rows of elements from each day.
@@ -317,50 +310,49 @@ Pivot it into a dataset like:
                               (cons "lows" lows))))))
 
 (defun sunshine-draw-forecast (forecast)
-  "Draw FORECAST in pretty ASCII."
+  "Draw FORECAST in pretty ASCII, in the current buffer."
   (let* ((cached (sunshine-get-cached-time "%b. %e at %l:%M %p"))
          (location (cdr (assoc 'location forecast)))
          (output-rows (sunshine-pivot-forecast-rows forecast)))
     (setq buffer-read-only nil)
     (erase-buffer)
-    (insert (concat " "
-                    ;; Heading, in tall text.
-                    (propertize (concat "Forecast for " location)
-                                    'font-lock-face '(:foreground "navajo white" :height 1.5))
-                    ;; Newline, providing extra space below.
-                    (propertize "\n" 'line-spacing .5)))
-    (while output-rows
-      (let* ((wholerow (car output-rows))
-             (type (car wholerow))
-             (row (cdr wholerow))
-             (col 1))
-        (while row
-          (if (or sunshine-show-icons
-                  (not (equal type "icons")))
-              (insert (sunshine-pad-or-trunc (sunshine-row-type-propertize (car row) type col) 20 1)
-                      (if (and (/= 1 (length row))
-                               (not (equal type "icons")))
-                          (propertize "\u2502" 'font-lock-face '(:foreground "gray50"))
-                        " ")))
-          (setq col (1+ col))
-          (setq row (cdr row)))
-        (insert (sunshine-newline-propertize type))
-        (setq output-rows (cdr output-rows))))
-    (insert (concat " Last updated " cached
-                    (propertize "\n"
-                                'line-height 1.5)))
-    (goto-char 0)
-    (setq buffer-read-only t)
-    (if sunshine-show-icons
-        (sunshine-get-icons))))
+    (save-excursion
+      (insert (concat " "
+                      ;; Heading, in tall text.
+                      (propertize (concat "Forecast for " location)
+                                  'font-lock-face '(:foreground "navajo white" :height 1.5))
+                      ;; Newline, providing extra space below.
+                      (propertize "\n" 'line-spacing .5)))
+      (while output-rows
+        (let* ((wholerow (car output-rows))
+               (type (car wholerow))
+               (row (cdr wholerow))
+               (col 1))
+          (while row
+            (if (or sunshine-show-icons
+                    (not (equal type "icons")))
+                (insert (sunshine-pad-or-trunc (sunshine-row-type-propertize (car row) type col) 20 1)
+                        (if (and (/= 1 (length row))
+                                 (not (equal type "icons")))
+                            (propertize "\u2502" 'font-lock-face '(:foreground "gray50"))
+                          " ")))
+            (setq col (1+ col))
+            (setq row (cdr row)))
+          (insert (sunshine-newline-propertize type))
+          (setq output-rows (cdr output-rows))))
+      (insert (concat " Last updated " cached
+                      (propertize "\n"
+                                  'line-height 1.5)))
+      (goto-char 0)
+      (setq buffer-read-only t)
+      (if sunshine-show-icons
+          (sunshine-get-icons)))))
 
 (defun sunshine-draw-quick-forecast (forecast)
   "Draw a quick FORECAST in the minibuffer."
   (let* ((cached (sunshine-get-cached-time "%b. %e at %l:%M %p"))
          (location (cdr (assoc 'location forecast)))
-         (output-rows (sunshine-pivot-forecast-rows forecast))
-         
-         )
+         (output-rows (sunshine-pivot-forecast-rows forecast)))
     (message (concat
       "Forecast for " location " (updated " cached ")\n\n"
       ;; Dates
@@ -390,16 +382,14 @@ Pivot it into a dataset like:
   (cl-loop for col from 1 upto 5 do
            (let* ((icon-point (sunshine-seek-to-icon-marker col))
                   (icon-code (if icon-point
-                           (save-excursion
-                             (progn (goto-char icon-point)
-                                    (thing-at-point 'word)))))
+                                 (progn (goto-char icon-point)
+                                        (thing-at-point 'word))))
                   (icon-url (if icon-code
                                 (sunshine-make-icon-url icon-code))))
              (when (and icon-point icon-url)
-               (goto-char icon-point)
                (if (sunshine-icon-cache-expired icon-url)
                    ;; Live download.
-                   (url-retrieve icon-url 'sunshine-icon-retrieved (list col))
+                   (url-retrieve icon-url 'sunshine-icon-retrieved (list col) t)
                  ;; Use cache.
                  (with-temp-buffer
                    (mm-disable-multibyte)
@@ -424,14 +414,13 @@ Expected to be used by the callback from `url-retrieve'."
         (progn
           (url-store-in-cache (current-buffer))
           (with-current-buffer sunshine-buffer-name
-            (sunshine-seek-to-icon-marker number)
-            (setq buffer-read-only nil)
-            ;; Make room!
-            (delete-region (point) (+ (round (car (image-size image-desc))) (point)))
-            (insert-image image-desc)
-            (setq buffer-read-only t)
-            (fit-window-to-buffer)
-            (goto-char 0))))))
+            (save-excursion
+              (sunshine-seek-to-icon-marker number)
+              (setq buffer-read-only nil)
+              ;; Make room for the icon!
+              (delete-region (point) (+ (round (car (image-size image-desc))) (point)))
+              (insert-image image-desc)
+              (setq buffer-read-only t)))))))
 
 (defun sunshine-make-icon-url (icon-name)
   "Make the URL pointing to the icon file for ICON-NAME."
