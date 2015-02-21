@@ -242,8 +242,8 @@ forecast results."
                           (cons 'icon (cdr (assoc 'icon (elt (cdr (assoc 'weather day)) 0))))
                           (cons 'temp
                                 (list
-                                 (cons 'min (format "%s %s" (cdr (assoc 'min (cdr (assoc 'temp day)))) temp-symbol))
-                                 (cons 'max (format "%s %s" (cdr (assoc 'max (cdr (assoc 'temp day)))) temp-symbol))))
+                                 (cons 'min (format "%s %s" (round (cdr (assoc 'min (cdr (assoc 'temp day))))) temp-symbol))
+                                 (cons 'max (format "%s %s" (round (cdr (assoc 'max (cdr (assoc 'temp day))))) temp-symbol))))
                           (cons 'pressure (cdr (assoc 'pressure day)))))))))
 
 (defun sunshine-prepare-buffer ()
