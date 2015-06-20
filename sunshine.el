@@ -81,6 +81,21 @@ The default value is one day (86400 seconds)."
   :group 'sunshine
   :type 'boolean)
 
+(defface sunshine-forecast-headline-face
+  '((t (:foreground "navajo white" :height 1.5)))
+  "The headline (location) text in the full-size forecast."
+  :group 'sunshine)
+
+(defface sunshine-forecast-day-divider-face
+  '((t (:foreground "gray50")))
+  "The vertical dividing line between days in the full-size forecast."
+  :group 'sunshine)
+
+(defface sunshine-forecast-date-face
+  '((t (:weight ultra-bold :foreground "white")))
+  "Date text in the full-size forecast."
+  :group 'sunshine)
+
 (defvar sunshine-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "q" 'sunshine-quit)
@@ -320,7 +335,7 @@ Pivot it into a dataset like:
       (insert (concat " "
                       ;; Heading, in tall text.
                       (propertize (concat "Forecast for " location)
-                                  'font-lock-face '(:foreground "navajo white" :height 1.5))
+                                  'font-lock-face 'sunshine-forecast-headline-face)
                       ;; Newline, providing extra space below.
                       (propertize "\n" 'line-spacing .5)))
       (while output-rows
@@ -334,7 +349,7 @@ Pivot it into a dataset like:
                 (insert (sunshine-pad-or-trunc (sunshine-row-type-propertize (car row) type col) 20 1)
                         (if (and (/= 1 (length row))
                                  (not (equal type "icons")))
-                            (propertize "\u2502" 'font-lock-face '(:foreground "gray50"))
+                            (propertize "\u2502" 'font-lock-face 'sunshine-forecast-day-divider-face)
                           " ")))
             (setq col (1+ col))
             (setq row (cdr row)))
@@ -440,7 +455,7 @@ Expected to be used by the callback from `url-retrieve'."
   (or (cond ((equal type "dates") (propertize
                                    string
                                    'font-lock-face
-                                   '(:weight ultra-bold :foreground "white")))
+                                   'sunshine-forecast-date-face))
             ((equal type "descs") string)
             ((equal type "highs") string)
             ((equal type "lows") string)
