@@ -2,6 +2,7 @@
 
 ;; Author: Aaron Bieber <aaron@aaronbieber.com>
 ;; Version: 0.1
+;; Package-Version: 20150620.1320
 ;; Package-Requires: ((cl-lib "0.5"))
 ;; Keywords: tools, weather
 ;; URL: https://github.com/aaronbieber/sunshine.el
@@ -55,6 +56,12 @@ See `run-hooks'."
 (defcustom sunshine-location "New York, NY"
   "The default location for which to retrieve weather.
 The location value should be a city/state value like \"New York, NY\""
+  :group 'sunshine
+  :type 'string)
+
+(defcustom sunshine-appid ""
+  "The APPID you got when you registered in Openweather.
+You should get it by loging-in to your account and pasting the API key here"
   :group 'sunshine
   :type 'string)
 
@@ -118,13 +125,13 @@ The following keys are available in `sunshine-mode':
   "The main entry into Sunshine; display the forecast in a window."
   (interactive)
   ;;(sunshine-prepare-window)
-  (sunshine-get-forecast sunshine-location sunshine-units 'full))
+  (sunshine-get-forecast sunshine-location sunshine-units 'full sunshine-appid))
 
 ;;;###autoload
 (defun sunshine-quick-forecast ()
   "Display a quick forecast in the minibuffer."
   (interactive)
-  (sunshine-get-forecast sunshine-location sunshine-units 'quick))
+  (sunshine-get-forecast sunshine-location sunshine-units 'quick sunshine-appid))
 
 (defun sunshine-quit ()
   "Destroy the Sunshine buffer."
@@ -140,21 +147,22 @@ The following keys are available in `sunshine-mode':
 
 ;;; INTERNAL FUNCTIONS:
 
-(defun sunshine-make-url (location units)
+(defun sunshine-make-url (location units appid)
   "Make a URL for retrieving the weather for LOCATION in UNITS."
   (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
-                      (url-encode-url location)
-                      "&mode=json&units="
-                      (url-encode-url (symbol-name units))
-                      "&cnt=5"))
+          (url-encode-url location)
+          "&APPID=" appid 
+          "&mode=json&units="
+          (url-encode-url (symbol-name units))
+          "&cnt=5"))
 
-(defun sunshine-get-forecast (location units display-type)
+(defun sunshine-get-forecast (location units display-type appid)
   "Get forecast data from OpenWeatherMap's API.
 Provide a LOCATION and optionally the preferred unit of measurement as
 UNITS (e.g. 'metric' or 'imperial').
 DISPLAY-TYPE determines whether a full or quick forecast is shown.
 Its value may be 'full or 'quick."
-  (let* ((url (sunshine-make-url location units)))
+  (let* ((url (sunshine-make-url location units appid)))
     (if (sunshine-forecast-cache-expired url)
         (url-retrieve url 'sunshine-retrieved (list display-type) t)
       ;; Cache is not expired; pull out the cached data.
@@ -214,7 +222,7 @@ DISPLAY-TYPE defines the type of display that will be shown."
   "Return the last modified time of the Sunshine cache, if it exists.
 If provided, FORMAT is used as an argument to `format-time-string'.
 If omitted, or nil, a date object is returned."
-  (let ((cache-time (url-is-cached (sunshine-make-url sunshine-location sunshine-units))))
+  (let ((cache-time (url-is-cached (sunshine-make-url sunshine-location sunshine-units sunshine-appid))))
     (if format
         (format-time-string format cache-time)
       cache-time)))
