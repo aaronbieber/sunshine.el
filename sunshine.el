@@ -60,8 +60,8 @@ The location value should be a city/state value like \"New York, NY\""
   :type 'string)
 
 (defcustom sunshine-appid ""
-  "The APPID you got when you registered in Openweather.
-You should get it by loging-in to your account and pasting the API key here"
+  "You can get an APPID by logging into your OpenWeather account.
+You should get it by loging-in to your account and pasting the API key here."
   :group 'sunshine
   :type 'string)
 
