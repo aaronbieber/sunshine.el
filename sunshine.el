@@ -167,8 +167,10 @@ Its value may be 'full or 'quick."
         (url-retrieve url 'sunshine-retrieved (list display-type) t)
       ;; Cache is not expired; pull out the cached data.
       (with-temp-buffer
-        (mm-disable-multibyte)
-        (url-cache-extract (url-cache-create-filename url))
+        ;; Extract cache as multibyte character data rather than literally,
+        ;; which is the behavior of `url-cache-extract'.
+        (set-buffer-multibyte t)
+        (insert-file-contents (url-cache-create-filename url))
         ;; Use a fake status value; we don't use it anyway.
         (sunshine-retrieved "status" display-type)))))
 
@@ -194,6 +196,7 @@ DISPLAY-TYPE defines the type of display that will be shown."
 
 (defun sunshine-extract-response ()
   "Extract the JSON response from the buffer returned by url-http."
+  (set-buffer-multibyte t)
   (progn
     (if (re-search-forward "^HTTP/.+ 200 OK$" (line-end-position) t)
         (when (search-forward "\n\n" nil t)
@@ -415,7 +418,6 @@ Pivot it into a dataset like:
                    (url-retrieve icon-url 'sunshine-icon-retrieved (list col) t)
                  ;; Use cache.
                  (with-temp-buffer
-                   (mm-disable-multibyte)
                    (url-cache-extract (url-cache-create-filename icon-url))
                    (sunshine-icon-retrieved "status" (list col))))))))
 
