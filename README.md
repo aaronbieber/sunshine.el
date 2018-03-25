@@ -2,7 +2,7 @@
 
 [![MELPA](http://melpa.org/packages/sunshine-badge.svg)](http://melpa.org/#/sunshine)
 
-An Emacs package for displaying the forecast from OpenWeatherMap.
+An Emacs package for displaying the forecast from APIXU.
 
 ![Screenshot](images/sunshine-screenshot.png?raw=true "Sunshine Screenshot")
 
@@ -14,17 +14,13 @@ An Emacs package for displaying the forecast from OpenWeatherMap.
 2. Add the following to your .emacs file:
 
    `(require 'sunshine)`
+   
+3. Create an account on https://www.apixu.com and set the variable
+   `sunshine-appid` to your API key.
 
-3. Configure your location by setting the variable `sunshine-location`.  You can
+4. Configure your location by setting the variable `sunshine-location`.  You can
    provide a string, like "New York, NY" or a ZIP code, like "90210".  This
    variable is available through the Customize facility.
-
-   When specifying a ZIP code, you may receive results from a foreign country.
-   This is due to weird behavior from OpenWeatherMap.  To resolve this, append
-   a comma and the country code after the ZIP code.  Note the lack of a space
-   in the example below.
-
-   `(setq sunshine-location "90210,USA")`
 
 A few other configuration options are available, see the configuration group
 called `sunshine`.
