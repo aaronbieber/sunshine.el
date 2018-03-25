@@ -60,8 +60,9 @@ The location value should be a city/state value like \"New York, NY\""
   :type 'string)
 
 (defcustom sunshine-appid ""
-  "You can get an APPID by logging into your OpenWeather account.
-You should get it by loging-in to your account and pasting the API key here."
+  "This is your APIXU API key.
+
+Create an account on https://www.apixu.com to get an API key."
   :group 'sunshine
   :type 'string)
 
@@ -150,16 +151,15 @@ The following keys are available in `sunshine-mode':
 (defun sunshine-make-url (location units appid)
   "Make a URL for retrieving the weather for LOCATION in UNITS.
 
-Requires your OpenWeatherMap APPID."
-  (concat "http://api.openweathermap.org/data/2.5/forecast?q="
+Requires your APIXU API key."
+  (concat "http://api.apixu.com/v1/forecast.json?q="
           (url-encode-url location)
-          "&APPID=" appid
-          "&mode=json&units="
-          (url-encode-url (symbol-name units))
-          "&cnt=5"))
+          "&key=" appid
+          "&dt=" (format-time-string "%Y-%m-%d")
+          "&days=5"))
 
 (defun sunshine-get-forecast (location units display-type appid)
-  "Get forecast data from OpenWeatherMap's API.
+  "Get forecast data from APIXU's API.
 
 Provide a LOCATION and optionally the preferred unit of measurement as
 UNITS (e.g. 'metric' or 'imperial').
@@ -167,7 +167,7 @@ UNITS (e.g. 'metric' or 'imperial').
 DISPLAY-TYPE determines whether a full or quick forecast is shown.
 Its value may be 'full or 'quick.
 
-Requires your OpenWeatherMap APPID."
+Requires your APIXU API key."
   (let* ((url (sunshine-make-url location units appid)))
     (if (sunshine-forecast-cache-expired url)
         (url-retrieve url 'sunshine-retrieved (list display-type) t)
@@ -261,22 +261,27 @@ If omitted, or nil, a date object is returned."
   "Build a simple, legible forecast from FORECAST.
 FORECAST is the raw forecast data resulting from calling json-read on the
 forecast results."
-  (let* ((citylist (cdr (assoc 'city forecast)))
-         (city (cdr (assoc 'name citylist)))
-         (country (cdr (assoc 'country citylist)))
+  (let* ((city (cdr (assoc 'name (cdr (assoc 'location forecast)))))
+         (country (cdr (assoc 'country (cdr (assoc 'location forecast)))))
          (temp-symbol (sunshine-units-symbol)))
     (list
      (cons 'location (concat city ", " country))
-     (cons 'days (cl-loop for day across (cdr (assoc 'list forecast)) collect
+     (cons 'days (cl-loop for day across (cdr (assoc 'forecastday (cdr (assoc 'forecast forecast)))) collect
                          (list
-                          (cons 'date (format-time-string "%A, %h. %e" (seconds-to-time (cdr (assoc 'dt day)))))
-                          (cons 'desc (cdr (assoc 'main (elt (cdr (assoc 'weather day)) 0))))
-                          (cons 'icon (cdr (assoc 'icon (elt (cdr (assoc 'weather day)) 0))))
+                          (cons 'date (format-time-string "%A, %h. %e"
+                                                          (date-to-time (concat (cdr (assoc 'date day)) " 00:00:00"))))
+                          (cons 'desc (cdr (assoc 'text (cdr (assoc 'condition (cdr (assoc 'day day)))))))
+                          (cons 'icon (car (last (split-string
+                                                  (cdr (assoc 'icon (cdr (assoc 'condition (cdr (assoc 'day day))))))
+                                                  "/"))))
                           (cons 'temp
                                 (list
-                                 (cons 'min (format "%s %s" (round (cdr (assoc 'temp_min (cdr (assoc 'main day))))) temp-symbol))
-                                 (cons 'max (format "%s %s" (round (cdr (assoc 'temp_max (cdr (assoc 'main day))))) temp-symbol))))
-                          (cons 'pressure (cdr (assoc 'pressure (cdr (assoc 'main day)))))))))))
+                                 (cons 'min (format "%s %s"
+                                                    (round (cdr (assoc (intern (concat "mintemp_" (downcase temp-symbol)))
+                                                                       (cdr (assoc 'day day))))) temp-symbol))
+                                 (cons 'max (format "%s %s"
+                                                    (round (cdr (assoc (intern (concat "maxtemp_" (downcase temp-symbol)))
+                                                                       (cdr (assoc 'day day))))) temp-symbol))))))))))
 
 (defun sunshine-prepare-buffer ()
   "Prepare a buffer for the forecast output."
@@ -397,7 +402,7 @@ Pivot it into a dataset like:
            (let* ((icon-point (sunshine-seek-to-icon-marker col))
                   (icon-code (if icon-point
                                  (progn (goto-char icon-point)
-                                        (thing-at-point 'word))))
+                                        (thing-at-point 'filename))))
                   (icon-url (if icon-code
                                 (sunshine-make-icon-url icon-code))))
              (when (and icon-point icon-url)
@@ -437,9 +442,9 @@ Receives param STATUS, for which see `url-retrieve'."
               (insert-image image-desc)
               (setq buffer-read-only t)))))))
 
-(defun sunshine-make-icon-url (icon-name)
-  "Make the URL pointing to the icon file for ICON-NAME."
-  (concat "http://openweathermap.org/img/w/" (url-encode-url icon-name) ".png"))
+(defun sunshine-make-icon-url (icon-filename)
+  "Make the URL pointing to the icon file for ICON-FILENAME."
+  (concat "http://cdn.apixu.com/weather/64x64/day/" (url-encode-url icon-filename)))
 
 (defun sunshine-newline-propertize (type)
   "Output a newline appropriate for a line of TYPE."
