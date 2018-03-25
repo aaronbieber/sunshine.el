@@ -41,7 +41,7 @@
 (defgroup sunshine nil
   "A utility for viewing your local weather forecast."
   :group 'tools)
-  
+
 (defcustom sunshine-buffer-name "*Sunshine*"
   "Name for the Sunshine buffer.  You probably don't need to change this."
   :group 'sunshine
