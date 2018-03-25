@@ -25,8 +25,8 @@
 ;;; Commentary:
 
 ;; Sunshine allows you to view your weather forecast directly within
-;; Emacs. The recommended method of installing Sunshine is from the
-;; MELPA repository. Full instructions can be found at
+;; Emacs.  The recommended method of installing Sunshine is from the
+;; MELPA repository.  Full instructions can be found at
 ;; http://melpa.org/#/getting-started
 
 ;;; Code:
@@ -148,8 +148,9 @@ The following keys are available in `sunshine-mode':
 ;;; INTERNAL FUNCTIONS:
 
 (defun sunshine-make-url (location units appid)
-  "Make a URL for retrieving the weather for LOCATION in UNITS."
-  (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
+  "Make a URL for retrieving the weather for LOCATION in UNITS.
+
+Requires your OpenWeatherMap APPID."
           (url-encode-url location)
           "&APPID=" appid 
           "&mode=json&units="
@@ -158,10 +159,14 @@ The following keys are available in `sunshine-mode':
 
 (defun sunshine-get-forecast (location units display-type appid)
   "Get forecast data from OpenWeatherMap's API.
+
 Provide a LOCATION and optionally the preferred unit of measurement as
 UNITS (e.g. 'metric' or 'imperial').
+
 DISPLAY-TYPE determines whether a full or quick forecast is shown.
-Its value may be 'full or 'quick."
+Its value may be 'full or 'quick.
+
+Requires your OpenWeatherMap APPID."
   (let* ((url (sunshine-make-url location units appid)))
     (if (sunshine-forecast-cache-expired url)
         (url-retrieve url 'sunshine-retrieved (list display-type) t)
@@ -433,7 +438,9 @@ Expected to be used by the callback from `url-retrieve'."
    'png t))
 
 (defun sunshine-icon-retrieved (status number)
-  "Callback from `url-retrieve' that places icon NUMBER into the buffer."
+  "Callback from `url-retrieve' that places icon NUMBER into the buffer.
+
+Receives param STATUS, for which see `url-retrieve'."
   (let ((image-desc (sunshine-extract-icon)))
     (if image-desc
         (progn
