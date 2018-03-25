@@ -289,24 +289,6 @@ forecast results."
       (setq buffer-read-only t))
     buf))
 
-;;(defun sunshine-prepare-window ()
-;;  "Create the window and buffer used to display the forecast."
-;;  (let* ((buf (get-buffer-create sunshine-buffer-name))
-;;         (win (or (get-buffer-window sunshine-buffer-name)
-;;                  (split-window-vertically))))
-;;    (set-window-buffer win buf)
-;;    ;; Start the window rather short so it doesn't jarringly change
-;;    ;; size after the download.
-;;    (window-resize win (- 10 (window-total-height win)))
-;;    (with-current-buffer buf
-;;      (setq buffer-read-only nil)
-;;      (erase-buffer)
-;;      (kill-all-local-variables)
-;;      (set-window-dedicated-p (get-buffer-window buf) t)
-;;      (sunshine-mode)
-;;      (insert "Loading...")
-;;      (setq buffer-read-only t))))
-
 (defun sunshine-pivot-forecast-rows (forecast)
   "Pivot FORECAST rows of days into rows of elements from each day.
 This puts the elements in display order.
