@@ -16,7 +16,7 @@ An Emacs package for displaying the forecast from OpenWeatherMap.
    `(require 'sunshine)`
 
 3. Configure your location by setting the variable `sunshine-location`.  You can
-   provide a string, like "New York, NY" or a ZIP code, like "90210".  This
+   provide a string, like "New York, NY, US" or a ZIP code, like "90210".  This
    variable is available through the Customize facility.
 
    When specifying a ZIP code, you may receive results from a foreign country.
