@@ -208,8 +208,7 @@ DISPLAY-TYPE defines the type of display that will be shown."
         (when (search-forward "\n\n" nil t)
           (prog1 (json-read)
             (url-store-in-cache (current-buffer))
-            (kill-buffer)
-            ))
+            (kill-buffer)))
       (kill-buffer))))
 
 (defun sunshine-display-error ()
