@@ -26,6 +26,14 @@ An Emacs package for displaying the forecast from OpenWeatherMap.
 
    `(setq sunshine-location "90210,USA")`
 
+4. Set the variable `sunshine-appid`.  You need to create a free
+   [OpenWeatherMap](https://www.openweathermap.org) account. Your api key will
+   be available at
+   [https://home.openweathermap.org/api_keys](https://home.openweathermap.org/api_keys)
+   (URL requires login).
+
+   `(setq sunshine-appid "API-KEY-HERE")`
+
 A few other configuration options are available, see the configuration group
 called `sunshine`.
 
