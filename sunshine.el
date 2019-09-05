@@ -2,7 +2,8 @@
 
 ;; Author: Aaron Bieber <aaron@aaronbieber.com>
 ;; Version: 0.1
-;; Package-Version: 20150620.1320
+;; Package-Version: 20181029.1654
+;; Package-X-Original-Version: 20150620.1320
 ;; Package-Requires: ((cl-lib "0.5"))
 ;; Keywords: tools, weather
 ;; URL: https://github.com/aaronbieber/sunshine.el
@@ -151,7 +152,7 @@ The following keys are available in `sunshine-mode':
   "Make a URL for retrieving the weather for LOCATION in UNITS.
 
 Requires your OpenWeatherMap APPID."
-  (concat "http://api.openweathermap.org/data/2.5/forecast?q="
+  (concat "http://api.openweathermap.org/data/2.5/forecast/daily?q="
           (url-encode-url location)
           "&APPID=" appid
           "&mode=json&units="
@@ -273,8 +274,8 @@ forecast results."
                           (cons 'icon (cdr (assoc 'icon (elt (cdr (assoc 'weather day)) 0))))
                           (cons 'temp
                                 (list
-                                 (cons 'min (format "%s %s" (round (cdr (assoc 'temp_min (cdr (assoc 'main day))))) temp-symbol))
-                                 (cons 'max (format "%s %s" (round (cdr (assoc 'temp_max (cdr (assoc 'main day))))) temp-symbol))))
+                                 (cons 'min (format "%s %s" (round (cdr (assoc 'min (cdr (assoc 'temp day))))) temp-symbol))
+                                 (cons 'max (format "%s %s" (round (cdr (assoc 'max (cdr (assoc 'temp day))))) temp-symbol))))
                           (cons 'pressure (cdr (assoc 'pressure (cdr (assoc 'main day)))))))))))
 
 (defun sunshine-prepare-buffer ()
