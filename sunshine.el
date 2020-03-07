@@ -54,9 +54,9 @@ See `run-hooks'."
   :group 'sunshine
   :type 'hook)
 
-(defcustom sunshine-location "New York, NY"
+(defcustom sunshine-location "New York, NY, US"
   "The default location for which to retrieve weather.
-The location value should be a city/state value like \"New York, NY\""
+The location value should be a city/state value including a country code, like \"New York, NY, US\""
   :group 'sunshine
   :type 'string)
 
